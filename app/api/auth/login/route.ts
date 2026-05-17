@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       user: { id: user.id, name: user.name, email: user.email, createdAt: user.createdAt },
     });
   } catch (e) {
-    if (e instanceof z.ZodError) return NextResponse.json({ error: e.errors[0].message }, { status: 400 });
+    if (e instanceof z.ZodError) return NextResponse.json({ error: e.issues[0].message }, { status: 400 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

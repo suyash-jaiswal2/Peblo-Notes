@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     await setAuthCookie(await createToken(user.id));
     return NextResponse.json({ user }, { status: 201 });
   } catch (e) {
-    if (e instanceof z.ZodError) return NextResponse.json({ error: e.errors[0].message }, { status: 400 });
+    if (e instanceof z.ZodError) return NextResponse.json({ error: e.issues[0].message }, { status: 400 });
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
