@@ -7,9 +7,13 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
+type FormField = { label: string; key: keyof typeof defaultForm; type: string; placeholder: string };
+
+const defaultForm = { name: "", email: "", password: "" };
+
 export default function SignupPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState(defaultForm);
   const [show, setShow] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -37,6 +41,11 @@ export default function SignupPage() {
     color: "var(--text-primary)",
   };
 
+  const fields: FormField[] = [
+    { label: "Full name", key: "name", type: "text", placeholder: "John Doe" },
+    { label: "Email", key: "email", type: "email", placeholder: "you@example.com" },
+  ];
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
       <div className="rounded-3xl p-8" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
@@ -44,13 +53,10 @@ export default function SignupPage() {
         <p className="text-sm mb-8" style={{ color: "var(--text-muted)" }}>Start your AI workspace</p>
 
         <form onSubmit={submit} className="space-y-4">
-          {[
-            { label: "Full name", key: "name", type: "text", placeholder: "John Doe" },
-            { label: "Email", key: "email", type: "email", placeholder: "you@example.com" },
-          ].map((f) => (
+          {fields.map((f) => (
             <div key={f.key}>
               <label className="block text-xs mb-2" style={{ color: "var(--text-secondary)" }}>{f.label}</label>
-              <input type={f.type} required value={(form as any)[f.key]}
+              <input type={f.type} required value={form[f.key]}
                 onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
                 placeholder={f.placeholder} className="w-full px-4 py-3 rounded-xl text-sm outline-none focus:ring-1 focus:ring-violet-500/40"
                 style={inputStyle} />

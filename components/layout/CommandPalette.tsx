@@ -12,7 +12,6 @@ export default function CommandPalette() {
   const open = useAppStore((s) => s.commandPaletteOpen);
   const setOpen = useAppStore((s) => s.setCommandPaletteOpen);
   const notes = useNotesStore((s) => s.notes);
-  const setSearch = useNotesStore((s) => s.setSearchQuery);
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -20,6 +19,7 @@ export default function CommandPalette() {
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   async function newNote() {
@@ -41,12 +41,11 @@ export default function CommandPalette() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-40" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
-          <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] px-4" onClick={() => setOpen(false)}>
+          <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh] px-4">
             <motion.div initial={{ opacity: 0, scale: 0.95, y: -20 }} animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -20 }} transition={{ type: "spring", duration: 0.3 }}
-              onClick={(e) => e.stopPropagation()}
               className="w-full max-w-lg rounded-2xl overflow-hidden"
-              style={{ background: "rgba(12,12,18,0.96)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(139,92,246,0.1)" }}>
+              style={{ background: "rgba(12,12,18,0.96)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 24px 80px rgba(0,0,0,0.6)" }}>
               <Command label="Command Menu">
                 <div style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }} className="flex items-center px-4">
                   <Search size={15} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
