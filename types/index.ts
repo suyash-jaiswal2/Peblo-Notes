@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  createdAt: string;
+  createdAt: Date | string;
 }
 
 export interface AiSummary {
@@ -11,7 +11,7 @@ export interface AiSummary {
   summary: string;
   actionItems: string[];
   suggestedTitle: string | null;
-  generatedAt: string;
+  generatedAt: Date | string;
 }
 
 export interface Note {
@@ -26,8 +26,8 @@ export interface Note {
   shareId: string | null;
   userId: string;
   aiSummary: AiSummary | null;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface Insights {
