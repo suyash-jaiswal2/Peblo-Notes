@@ -2,15 +2,17 @@
 
 import { useEffect } from "react";
 import { useAppStore } from "@/lib/store";
+import { User } from "@/types";
 
 export default function WorkspaceProvider({
   user,
   children,
 }: {
-  user: { id: string; name: string; email: string; createdAt: Date };
+  user: User;
   children: React.ReactNode;
 }) {
   const setUser = useAppStore((s) => s.setUser);
-  useEffect(() => { setUser(user as any); }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { setUser(user); }, []);
   return <>{children}</>;
 }

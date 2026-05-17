@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Pin, Archive, Sparkles, Share2, Trash2, Globe, AlertTriangle } from "lucide-react";
+import { motion } from "framer-motion";
+import { Pin, Archive, Sparkles, Share2, Trash2, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { Note } from "@/types";
 import { formatDate, truncate, stripHtml, tagColor } from "@/lib/utils";
@@ -13,63 +13,23 @@ export default function NoteCard({ note }: { note: Note }) {
   const router = useRouter();
   const { updateNote, removeNote } = useNotesStore();
   const [loading, setLoading] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const hasAi = !!note.aiSummary;
   const recentlyUpdated = Date.now() - new Date(note.updatedAt).getTime() < 1000 * 60 * 30;
 
-  async function patch(data: Partial<Note>) {
+  async function patchNote(data: Partial<Note>) {
     const res = await fetch(`/api/notes/${note.id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
-    if (res.ok) { const { note: updated } = await res.json(); updateNote(note.id, updated); }
-  }
-
-  async function togglePin(e: React.MouseEvent) {
-    e.stopPropagation();
-    // Optimistic update
-    updateNote(note.id, { isPinned: !note.isPinned });
-    try {
-      const res = await fetch(`/api/notes/${note.id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isPinned: !note.isPinned }),
-      });
-      if (!res.ok) {
-        // Rollback on failure
-        updateNote(note.id, { isPinned: note.isPinned });
-        toast.error("Failed to update pin");
-      } else {
-        toast.success(note.isPinned ? "Unpinned" : "Pinned");
-      }
-    } catch {
-      updateNote(note.id, { isPinned: note.isPinned });
-      toast.error("Failed to update pin");
+    if (res.ok) {
+      const { note: updated } = await res.json();
+      updateNote(note.id, updated);
     }
   }
 
-  async function toggleArchive(e: React.MouseEvent) {
-    e.stopPropagation();
-    // Optimistic update
-    updateNote(note.id, { isArchived: !note.isArchived });
-    try {
-      const res = await fetch(`/api/notes/${note.id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isArchived: !note.isArchived }),
-      });
-      if (!res.ok) {
-        updateNote(note.id, { isArchived: note.isArchived });
-        toast.error("Failed to update archive status");
-      } else {
-        toast.success(note.isArchived ? "Note restored" : "Note archived");
-      }
-    } catch {
-      updateNote(note.id, { isArchived: note.isArchived });
-      toast.error("Failed to update archive status");
-    }
-  }
-
-  async function shareNote(e: React.MouseEvent) {
-    e.stopPropagation();
+  async function shareNote() {
     setLoading("share");
     const res = await fetch(`/api/notes/${note.id}/share`, { method: "POST" });
     const { note: updated, shareUrl } = await res.json();
@@ -84,7 +44,7 @@ export default function NoteCard({ note }: { note: Note }) {
   }
 
   async function deleteNote() {
-    setConfirmDelete(false);
+    if (!confirm("Delete this note?")) return;
     await fetch(`/api/notes/${note.id}`, { method: "DELETE" });
     removeNote(note.id);
     toast.success("Note deleted");
@@ -104,12 +64,10 @@ export default function NoteCard({ note }: { note: Note }) {
         boxShadow: note.isPinned ? "0 0 20px rgba(139,92,246,0.08)" : undefined,
       }}
     >
-      {/* Glow on recently active */}
       {recentlyUpdated && !note.isArchived && (
         <div className="absolute inset-x-0 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(139,92,246,0.5), transparent)" }} />
       )}
 
-      {/* AI shimmer */}
       {hasAi && (
         <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
           <div className="ai-shimmer absolute inset-0 rounded-2xl" />
@@ -150,7 +108,9 @@ export default function NoteCard({ note }: { note: Note }) {
               );
             })}
             {note.tags.length > 3 && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: "var(--text-muted)" }}>+{note.tags.length - 3}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ color: "var(--text-muted)" }}>
+                +{note.tags.length - 3}
+              </span>
             )}
           </div>
         )}
@@ -158,65 +118,25 @@ export default function NoteCard({ note }: { note: Note }) {
         <p className="text-[10px]" style={{ color: "var(--text-muted)" }}>{formatDate(note.updatedAt)}</p>
       </div>
 
-      {/* Hover actions */}
-      <div
-        className="absolute bottom-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+      <motion.div
+        initial={{ opacity: 0 }}
+        className="absolute bottom-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={(e) => e.stopPropagation()}
       >
         {[
-          { icon: Pin, action: togglePin, color: "#8b5cf6", title: note.isPinned ? "Unpin" : "Pin", key: "pin" },
+          { icon: Pin, action: () => patchNote({ isPinned: !note.isPinned }), color: "#8b5cf6", title: "Pin", key: "pin" },
           { icon: Share2, action: shareNote, color: "#10b981", title: "Share", key: "share" },
-          { icon: Archive, action: toggleArchive, color: "#f59e0b", title: note.isArchived ? "Restore" : "Archive", key: "archive" },
-          { icon: Trash2, action: (e: React.MouseEvent) => { e.stopPropagation(); setConfirmDelete(true); }, color: "#ef4444", title: "Delete", key: "delete" },
+          { icon: Archive, action: () => patchNote({ isArchived: !note.isArchived }), color: "#f59e0b", title: note.isArchived ? "Restore" : "Archive", key: "archive" },
+          { icon: Trash2, action: deleteNote, color: "#ef4444", title: "Delete", key: "delete" },
         ].map((btn) => (
           <motion.button key={btn.key} whileHover={{ scale: 1.15 }} whileTap={{ scale: 0.9 }}
             onClick={btn.action} title={btn.title} disabled={loading === btn.key}
-            className="w-8 h-8 rounded-lg flex items-center justify-center"
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
             style={{ background: "rgba(0,0,0,0.6)", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <btn.icon size={13} style={{ color: btn.color }} />
+            <btn.icon size={12} style={{ color: btn.color }} />
           </motion.button>
         ))}
-      </div>
-
-      {/* Custom Delete Confirmation Dialog */}
-      <AnimatePresence>
-        {confirmDelete && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 rounded-2xl flex flex-col items-center justify-center gap-3 p-4 z-10"
-            style={{ background: "rgba(10,10,15,0.92)", backdropFilter: "blur(8px)" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-2" style={{ color: "#ef4444" }}>
-              <AlertTriangle size={16} />
-              <span className="text-xs font-semibold">Delete this note?</span>
-            </div>
-            <p className="text-[10px] text-center" style={{ color: "var(--text-muted)" }}>
-              This action cannot be undone.
-            </p>
-            <div className="flex items-center gap-2">
-              <motion.button
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                onClick={() => setConfirmDelete(false)}
-                className="px-3 py-1.5 rounded-lg text-xs"
-                style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}
-              >
-                Cancel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                onClick={deleteNote}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                style={{ background: "rgba(239,68,68,0.2)", border: "1px solid rgba(239,68,68,0.4)", color: "#ef4444" }}
-              >
-                Delete
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </motion.div>
     </motion.div>
   );
 }

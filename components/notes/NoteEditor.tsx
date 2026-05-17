@@ -20,7 +20,7 @@ import AiPanel from "@/components/ai/AiPanel";
 
 export default function NoteEditor({ initialNote }: { initialNote: Note }) {
   const router = useRouter();
-  const { updateNote } = useNotesStore();
+  const updateNote = useNotesStore((s) => s.updateNote);
   const [note, setNote] = useState<Note>(initialNote);
   const [title, setTitle] = useState(note.title || "");
   const [content, setContent] = useState(note.content || "");
@@ -28,7 +28,7 @@ export default function NoteEditor({ initialNote }: { initialNote: Note }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(true);
   const [aiLoading, setAiLoading] = useState(false);
-  const [showAi, setShowAi] = useState(!!initialNote.aiSummary);
+  const [showAi, setShowAi] = useState(false);
   const [shareLoading, setShareLoading] = useState(false);
 
   const debouncedTitle = useDebounce(title, 800);
@@ -49,22 +49,38 @@ export default function NoteEditor({ initialNote }: { initialNote: Note }) {
     setSaving(true);
     try {
       const res = await fetch(`/api/notes/${note.id}`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: t, content: c }),
       });
-      if (res.ok) { const { note: updated } = await res.json(); setNote(updated); updateNote(note.id, updated); setSaved(true); }
-    } finally { setSaving(false); }
+      if (res.ok) {
+        const { note: updated } = await res.json();
+        setNote(updated);
+        updateNote(note.id, updated);
+        setSaved(true);
+      }
+    } finally {
+      setSaving(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [note.id]);
 
   useEffect(() => {
     if (!saved) saveNote(debouncedTitle, debouncedContent);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedTitle, debouncedContent]);
 
   async function patch(data: Partial<Note>) {
     const res = await fetch(`/api/notes/${note.id}`, {
-      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data),
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
-    if (res.ok) { const { note: updated } = await res.json(); setNote(updated); updateNote(note.id, updated); }
+    if (res.ok) {
+      const { note: updated } = await res.json();
+      setNote(updated);
+      updateNote(note.id, updated);
+    }
   }
 
   async function addTag(e: React.KeyboardEvent) {
@@ -104,13 +120,19 @@ export default function NoteEditor({ initialNote }: { initialNote: Note }) {
     setShareLoading(true);
     const res = await fetch(`/api/notes/${note.id}/share`, { method: "POST" });
     const { note: updated, shareUrl } = await res.json();
-    setNote(updated); updateNote(note.id, updated);
+    setNote(updated);
+    updateNote(note.id, updated);
     if (shareUrl) { navigator.clipboard.writeText(shareUrl); toast.success("Share link copied!"); }
     else { toast.success("Note made private"); }
     setShareLoading(false);
   }
 
-  const ToolbarBtn = ({ onClick, active, children, title }: any) => (
+  const ToolbarBtn = ({ onClick, active, children, title }: {
+    onClick: () => void;
+    active: boolean;
+    children: React.ReactNode;
+    title: string;
+  }) => (
     <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
       onClick={onClick} title={title}
       className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
@@ -191,7 +213,6 @@ export default function NoteEditor({ initialNote }: { initialNote: Note }) {
               style={{ color: "var(--text-primary)", lineHeight: "1.3" }}
               onInput={(e) => { const t = e.target as HTMLTextAreaElement; t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; }} />
 
-            {/* Tags */}
             <div className="flex flex-wrap gap-1.5 mb-6">
               {note.tags.map((tag) => {
                 const c = tagColor(tag);
@@ -214,9 +235,8 @@ export default function NoteEditor({ initialNote }: { initialNote: Note }) {
         </div>
       </div>
 
-      {/* AI Panel */}
       <AnimatePresence>
-        {showAi && (
+        {(showAi || note.aiSummary) && (
           <AiPanel note={note} onClose={() => setShowAi(false)} onApplyTitle={(t) => { setTitle(t); setSaved(false); }} />
         )}
       </AnimatePresence>
