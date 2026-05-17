@@ -1,0 +1,49 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  notes     Note[]
+}
+
+model Note {
+  id         String     @id @default(cuid())
+  title      String     @default("Untitled")
+  content    String     @default("")
+  tags       String[]   @default([])
+  category   String?
+  isArchived Boolean    @default(false)
+  isPinned   Boolean    @default(false)
+  isPublic   Boolean    @default(false)
+  shareId    String?    @unique
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiSummary  AiSummary?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([shareId])
+}
+
+model AiSummary {
+  id             String   @id @default(cuid())
+  noteId         String   @unique
+  note           Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  summary        String
+  actionItems    String[]
+  suggestedTitle String?
+  generatedAt    DateTime @default(now())
+}
