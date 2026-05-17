@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
+import { useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, X, SlidersHorizontal } from "lucide-react";
-import { toast } from "sonner";
+import { Plus, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useNotesStore } from "@/lib/store";
 import NoteCard from "@/components/notes/NoteCard";
@@ -15,9 +14,10 @@ export default function NotesPage() {
   const archived = searchParams.get("archived") === "true";
   const {
     setNotes, addNote, searchQuery, setSearchQuery, selectedTags, toggleTag,
-    clearFilters, showArchived, setShowArchived, isLoading, setLoading, getFilteredNotes, notes,
+    clearFilters, setShowArchived, isLoading, setLoading, getFilteredNotes, notes,
   } = useNotesStore();
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { setShowArchived(archived); }, [archived]);
 
   const fetchNotes = useCallback(async () => {
@@ -25,6 +25,7 @@ export default function NotesPage() {
     const res = await fetch(`/api/notes?archived=${archived}`);
     if (res.ok) { const { notes } = await res.json(); setNotes(notes); }
     setLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [archived]);
 
   useEffect(() => { fetchNotes(); }, [fetchNotes]);

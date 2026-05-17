@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import NoteEditor from "@/components/notes/NoteEditor";
+import { Note } from "@/types";
 
 export default async function NotePage({ params }: { params: { id: string } }) {
   const user = await getCurrentUser();
@@ -13,5 +14,5 @@ export default async function NotePage({ params }: { params: { id: string } }) {
   });
   if (!note) notFound();
 
-  return <NoteEditor initialNote={note as any} />;
+  return <NoteEditor initialNote={note as Note} />;
 }
