@@ -9,7 +9,7 @@ Next.js 14 · TypeScript · Prisma · PostgreSQL (Neon) · Groq AI · Framer Mot
 
 1. Clone the repo
 2. `npm install`
-3. Copy `.env.example` to `.env.local` and fill in values
+3. Copy `.env.example` to `.env` and fill in values
 4. `npx prisma db push`
 5. `npm run dev`
 
